@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+body > ef-workbench {
+  width: 100vw !important;
+  height: 100vh !important;
+}

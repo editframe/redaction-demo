@@ -1,0 +1,17 @@
+{
+  "standin": "/standins/screen-recording.html",
+  "source": {
+    "src": "/src/assets/source/screen-recording.mp4",
+    "width": 1920,
+    "height": 1080
+  },
+  "notes": "Scenario: support-console screen capture. Private values scroll with the table, slide in with the\ncustomer panel, drop in as a toast, and ride along on a floating chat window that the cursor drags.",
+  "tracks": {
+    "url-id": {
+      "label": "ID"
+    },
+    "chat-addr": {
+      "label": "ADDRESS"
+    }
+  }
+}

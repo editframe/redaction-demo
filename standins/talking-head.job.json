@@ -1,0 +1,70 @@
+{
+  "standin": "/standins/talking-head.html",
+  "source": {
+    "src": "/src/assets/source/talking-head.mp4",
+    "width": 1920,
+    "height": 1080
+  },
+  "notes": "Scenario: talking head (NASA interview) with a fictional lower-third. The NASA patch is blurred throughout; the face is blurred only while the voice is disguised.",
+  "tracks": {
+    "face": {
+      "label": "FACE",
+      "windows": [
+        [
+          6.0,
+          20.5
+        ]
+      ],
+      "treatment": "scramble",
+      "scramble": {
+        "cell": 6,
+        "tile": 30,
+        "blur": 22,
+        "feather": 30
+      },
+      "padding": 14
+    },
+    "patch": {
+      "label": "PATCH",
+      "treatment": "scramble",
+      "scramble": {
+        "cell": 4,
+        "tile": 12,
+        "blur": 9,
+        "feather": 10
+      }
+    },
+    "lt-name": {
+      "label": "NAME"
+    },
+    "lt-email": {
+      "label": "EMAIL"
+    }
+  },
+  "audio": {
+    "redactions": [
+      {
+        "id": "org-name",
+        "start": 0.4,
+        "end": 1.28,
+        "treatment": "bleep",
+        "hz": 440,
+        "fade": 0.08,
+        "role": "beep"
+      },
+      {
+        "id": "disguised-section",
+        "start": 6.12,
+        "end": 20.33,
+        "treatment": "disguise",
+        "role": "voice"
+      },
+      {
+        "id": "term",
+        "start": 21.8,
+        "end": 22.75,
+        "treatment": "silence"
+      }
+    ]
+  }
+}

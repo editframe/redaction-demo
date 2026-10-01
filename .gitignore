@@ -1,0 +1,16 @@
+# deps and tool caches
+node_modules/
+.cache/
+.vite/
+*.tsbuildinfo
+__pycache__/
+*.cpuprofile
+*.log
+.DS_Store
+
+# interim / generated (anchored to the repo root)
+/work/
+/output/
+
+# third-party source clip: public domain, fetched per README
+/src/assets/public/

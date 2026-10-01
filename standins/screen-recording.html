@@ -1,0 +1,249 @@
+<!doctype html>
+<!--
+  STAND-IN SOURCE FOOTAGE — "screen recording with private details".
+
+  Not part of the product demo. Rendered once to src/assets/source/screen-recording.mp4, which the
+  redaction job (jobs/screen-recording.html) then treats like any customer upload.
+
+  Elements carrying data-pii="..." are measured by scripts/extract-tracks.mjs to produce
+  ground-truth redaction coordinates for this synthetic scene. The scene deliberately contains:
+    - PII that scrolls (ticket table, customer panel)
+    - PII that slides in and out (notification toast)
+    - PII that is dragged around the screen by the cursor (floating chat window)
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Stand-in: screen recording</title>
+    <script type="module" src="/src/editframe.ts"></script>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      #scene { font-family: -apple-system, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif; color: #111827; }
+      #scene * { box-sizing: border-box; }
+      .abs { position: absolute; left: 0; top: 0; }
+      #desk { background: linear-gradient(135deg, #3b2a8f 0%, #1d4ed8 55%, #0e7490 100%); }
+      #win { left: 80px; top: 60px; width: 1760px; height: 960px; border-radius: 16px; background: #fff; overflow: hidden;
+             box-shadow: 0 40px 90px rgba(0,0,0,.45), 0 0 0 1px rgba(0,0,0,.2); }
+      #titlebar { left: 0; top: 0; width: 1760px; height: 50px; background: #e5e7eb; border-bottom: 1px solid #d1d5db; }
+      .dot { position: absolute; top: 18px; width: 14px; height: 14px; border-radius: 7px; }
+      #url { left: 520px; top: 9px; width: 720px; height: 32px; border-radius: 8px; background: #f9fafb; border: 1px solid #d1d5db;
+             font-size: 16px; line-height: 30px; padding-left: 14px; color: #4b5563; white-space: nowrap; }
+      #side { left: 0; top: 50px; width: 240px; height: 910px; background: #111827; color: #d1d5db; }
+      #side .logo { position: absolute; left: 28px; top: 28px; font-size: 24px; font-weight: 800; color: #fff; letter-spacing: .5px; }
+      #side .nav { position: absolute; left: 20px; width: 200px; height: 44px; line-height: 44px; padding-left: 16px; border-radius: 8px; font-size: 18px; }
+      #side .nav.on { background: #1f2937; color: #fff; }
+      #main { left: 240px; top: 50px; width: 1520px; height: 910px; background: #fff; overflow: hidden; }
+      #h1 { left: 40px; top: 30px; font-size: 34px; font-weight: 700; }
+      #search { left: 1100px; top: 30px; width: 380px; height: 44px; border-radius: 10px; background: #f3f4f6; border: 1px solid #e5e7eb; font-size: 17px; line-height: 42px; padding-left: 16px; color: #9ca3af; }
+      .th { position: absolute; top: 112px; font-size: 14px; letter-spacing: 1.2px; font-weight: 700; color: #6b7280; }
+      #thead { left: 40px; top: 0; width: 1440px; height: 50px; border-bottom: 1px solid #e5e7eb; }
+      #viewport { left: 40px; top: 160px; width: 1440px; height: 608px; overflow: hidden; }
+      .row { position: absolute; left: 0; width: 1440px; height: 76px; border-bottom: 1px solid #f1f5f9; font-size: 20px; line-height: 76px; }
+      .row.sel { background: #eff6ff; }
+      .c { position: absolute; top: 0; white-space: nowrap; }
+      .pill { display: inline-block; height: 32px; line-height: 32px; padding: 0 14px; border-radius: 16px; font-size: 15px; font-weight: 600; vertical-align: middle; }
+      .open { background: #dcfce7; color: #166534; } .pend { background: #fef3c7; color: #92400e; } .esc { background: #fee2e2; color: #991b1b; }
+      #panel { left: 900px; top: 0; width: 620px; height: 910px; background: #fff; border-left: 1px solid #e5e7eb; box-shadow: -24px 0 60px rgba(0,0,0,.14); overflow: hidden; }
+      #panelInner { left: 0; top: 0; width: 620px; height: 1200px; }
+      .avatar { left: 40px; top: 36px; width: 84px; height: 84px; border-radius: 42px; background: #6366f1; color: #fff; font-size: 34px; font-weight: 700; text-align: center; line-height: 84px; }
+      .lbl { position: absolute; left: 40px; font-size: 13px; letter-spacing: 1.2px; font-weight: 700; color: #6b7280; }
+      .val { position: absolute; left: 40px; font-size: 24px; color: #111827; white-space: nowrap; }
+      #toast { width: 520px; height: 132px; border-radius: 16px; background: #111827; color: #fff; box-shadow: 0 20px 50px rgba(0,0,0,.4); }
+      #chat { width: 520px; height: 330px; border-radius: 14px; background: #fff; box-shadow: 0 30px 70px rgba(0,0,0,.45), 0 0 0 1px rgba(0,0,0,.18); overflow: hidden; }
+      #chatbar { left: 0; top: 0; width: 520px; height: 46px; background: #4f46e5; color: #fff; font-size: 17px; font-weight: 600; line-height: 46px; padding-left: 18px; }
+      .bubble { position: absolute; border-radius: 14px; padding: 12px 16px; font-size: 18px; line-height: 26px; }
+      #cursor { left: 0; top: 0; width: 40px; height: 40px; }
+      #ripple { width: 44px; height: 44px; border-radius: 22px; border: 3px solid rgba(255,255,255,.9); }
+    </style>
+  </head>
+  <body class="m-0 p-0 bg-slate-900">
+    <ef-timegroup id="scene" workbench mode="fixed" duration="20s" class="relative w-[1920px] h-[1080px] overflow-hidden bg-black">
+      <div id="desk" class="abs" style="inset:0"></div>
+
+      <div id="win" class="abs">
+        <div id="titlebar" class="abs">
+          <div class="dot" style="left:20px;background:#ff5f57"></div>
+          <div class="dot" style="left:44px;background:#febc2e"></div>
+          <div class="dot" style="left:68px;background:#28c840"></div>
+          <div id="url" class="abs">🔒 support.northwind.com/customers/<span data-pii="url-id" data-pii-label="ACCOUNT ID" data-pii-shape="rect">20817</span></div>
+        </div>
+
+        <div id="side" class="abs">
+          <div class="logo">NORTHWIND</div>
+          <div class="nav on" style="top:100px">Support queue</div>
+          <div class="nav" style="top:152px">Customers</div>
+          <div class="nav" style="top:204px">Billing</div>
+          <div class="nav" style="top:256px">Reports</div>
+          <div class="nav" style="top:308px">Settings</div>
+        </div>
+
+        <div id="main" class="abs">
+          <div id="h1" class="abs">Support queue</div>
+          <div id="search" class="abs">Search tickets…</div>
+          <div class="abs" style="left:40px;top:110px;width:1440px;height:50px;border-bottom:1px solid #e5e7eb;border-top:1px solid #e5e7eb;background:#fafafa"></div>
+          <div class="th" style="left:50px">TICKET</div>
+          <div class="th" style="left:190px">CUSTOMER</div>
+          <div class="th" style="left:470px">EMAIL</div>
+          <div class="th" style="left:860px">ISSUE</div>
+          <div class="th" style="left:1160px">STATUS</div>
+          <div class="th" style="left:1320px">AMOUNT</div>
+          <div id="viewport" class="abs"><div id="rows" class="abs" style="left:0;top:0"></div></div>
+          <div class="abs" style="left:40px;top:792px;font-size:16px;color:#6b7280">Showing 12 of 148 open tickets</div>
+
+          <div id="panel" class="abs">
+            <div id="panelInner" class="abs">
+              <div class="avatar abs">MR</div>
+              <div class="abs" style="left:144px;top:42px;font-size:32px;font-weight:700;white-space:nowrap"><span data-pii="panel-name" data-pii-label="NAME" data-pii-shape="rect">Marcus Reed</span></div>
+              <div class="abs" style="left:144px;top:88px;font-size:17px;color:#6b7280">Customer since 2019 · Gold plan</div>
+
+              <div class="lbl" style="top:170px">EMAIL</div>
+              <div class="val" style="top:194px"><span data-pii="panel-email" data-pii-label="EMAIL" data-pii-shape="rect">marcus.reed@lakeview.org</span></div>
+              <div class="lbl" style="top:260px">PHONE</div>
+              <div class="val" style="top:284px"><span data-pii="panel-phone" data-pii-label="PHONE" data-pii-shape="rect">+1 (512) 555-0147</span></div>
+              <div class="lbl" style="top:350px">DATE OF BIRTH</div>
+              <div class="val" style="top:374px"><span data-pii="panel-dob" data-pii-label="DOB" data-pii-shape="rect">March 14, 1986</span></div>
+              <div class="lbl" style="top:440px">ADDRESS</div>
+              <div class="val" style="top:464px;line-height:34px"><span data-pii="panel-addr" data-pii-label="ADDRESS" data-pii-shape="rect" style="display:inline-block">42 Alder Court<br />Austin, TX 78704</span></div>
+              <div class="lbl" style="top:586px">CARD ON FILE</div>
+              <div class="val" style="top:610px"><span data-pii="panel-card" data-pii-label="CARD" data-pii-shape="rect">4417 2098 6631 5520</span></div>
+              <div class="lbl" style="top:676px">SSN</div>
+              <div class="val" style="top:700px"><span data-pii="panel-ssn" data-pii-label="SSN" data-pii-shape="rect">512-44-9087</span></div>
+              <div class="lbl" style="top:766px">RECENT CHARGE</div>
+              <div class="val" style="top:790px">$412.00 · Subscription renewal</div>
+              <div class="abs" style="left:40px;top:870px;width:540px;height:56px;border-radius:12px;background:#2563eb;color:#fff;font-size:20px;font-weight:600;text-align:center;line-height:56px">Issue refund</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="toast" class="abs">
+        <div class="abs" style="left:22px;top:18px;width:36px;height:36px;border-radius:18px;background:#6366f1"></div>
+        <div class="abs" style="left:74px;top:14px;font-size:15px;color:#9ca3af;letter-spacing:.4px">NEW MESSAGE · just now</div>
+        <div class="abs" style="left:74px;top:42px;font-size:20px;font-weight:600;white-space:nowrap"><span data-pii="toast-email" data-pii-label="EMAIL" data-pii-shape="rect">marcus.reed@lakeview.org</span></div>
+        <div class="abs" style="left:74px;top:78px;font-size:18px;color:#d1d5db;white-space:nowrap">Please call me back on <span data-pii="toast-phone" data-pii-label="PHONE" data-pii-shape="rect">512-555-0147</span></div>
+      </div>
+
+      <div id="chat" class="abs">
+        <div id="chatbar" class="abs">Live chat · Marcus</div>
+        <div class="bubble" style="left:18px;top:64px;width:360px;background:#eef2ff;color:#1e1b4b">Thanks Marcus. Can you confirm the address on the account?</div>
+        <div class="bubble" style="left:128px;top:178px;width:374px;background:#4f46e5;color:#fff">Sure, it's <span data-pii="chat-addr" data-pii-label="ADDRESS" data-pii-shape="rect" style="display:inline-block">42 Alder Court, Austin TX 78704</span></div>
+        <div class="abs" style="left:18px;top:282px;width:484px;height:36px;border-radius:10px;background:#f3f4f6;border:1px solid #e5e7eb;font-size:16px;line-height:34px;padding-left:12px;color:#9ca3af">Type a reply…</div>
+      </div>
+
+      <div id="ripple" class="abs" style="opacity:0"></div>
+      <svg id="cursor" class="abs" viewBox="0 0 40 40" width="40" height="40">
+        <path d="M6 3 L6 29 L12.5 23 L17.5 34 L22 32 L17 21.5 L26 21.5 Z" fill="#111" stroke="#fff" stroke-width="2.4" stroke-linejoin="round" />
+      </svg>
+    </ef-timegroup>
+
+    <script type="module">
+      const root = document.getElementById("scene");
+
+      const customers = [
+        ["TK-48211", "Priya Natarajan", "priya.natarajan@brightmail.io", "Duplicate charge", "open", "$89.00"],
+        ["TK-48207", "Tom Becker", "t.becker@becker-design.com", "Login problem", "pend", "$0.00"],
+        ["TK-48199", "Lena Ortiz", "lena.ortiz@sunrise.net", "Refund request", "esc", "$240.00"],
+        ["TK-48190", "Daniel Okafor", "d.okafor@northpoint.co", "Plan upgrade", "open", "$120.00"],
+        ["TK-48185", "Marcus Reed", "marcus.reed@lakeview.org", "Unrecognised charge", "esc", "$412.00"],
+        ["TK-48172", "Sofia Marchetti", "sofia@marchetti.eu", "Invoice copy", "pend", "$64.00"],
+        ["TK-48166", "Wei Zhang", "wei.zhang@orchard.cn", "Address change", "open", "$0.00"],
+        ["TK-48151", "Hannah Cole", "hcole@colefamily.org", "Card declined", "esc", "$32.50"],
+        ["TK-48140", "Ravi Menon", "ravi.menon@kerala-tech.in", "Cancel service", "open", "$18.00"],
+        ["TK-48133", "Isabel Duarte", "isabel.duarte@mail.pt", "Billing question", "pend", "$75.00"],
+        ["TK-48120", "Chris Lund", "clund@lundworks.dk", "Tax receipt", "open", "$410.00"],
+        ["TK-48118", "Noor Haddad", "noor.haddad@amman.jo", "Password reset", "open", "$0.00"],
+      ];
+      const status = { open: ["Open", "open"], pend: ["Pending", "pend"], esc: ["Escalated", "esc"] };
+      const rowsEl = root.querySelector("#rows");
+      customers.forEach((c, i) => {
+        const [id, name, email, issue, st, amt] = c;
+        const row = document.createElement("div");
+        row.className = "row" + (i === 4 ? " sel" : "");
+        row.style.top = `${i * 76}px`;
+        row.innerHTML = `
+          <div class="c" style="left:10px;color:#6b7280">${id}</div>
+          <div class="c" style="left:150px;font-weight:600"><span data-pii="cust-${i}" data-pii-label="NAME" data-pii-shape="rect">${name}</span></div>
+          <div class="c" style="left:430px"><span data-pii="email-${i}" data-pii-label="EMAIL" data-pii-shape="rect">${email}</span></div>
+          <div class="c" style="left:820px">${issue}</div>
+          <div class="c" style="left:1120px"><span class="pill ${status[st][1]}">${status[st][0]}</span></div>
+          <div class="c" style="left:1280px">${amt}</div>`;
+        rowsEl.appendChild(row);
+      });
+
+      // ---- Animation tracks: all pure functions of time ----------------------------------
+      const clamp01 = (v) => Math.min(1, Math.max(0, v));
+      const ease = (p) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
+      const seg = (t, a, b) => ease(clamp01((t - a) / (b - a)));
+      const lerp = (a, b, k) => a + (b - a) * k;
+      const path = (t, keys) => {
+        // keys: [t, x, y]; eased between neighbours
+        if (t <= keys[0][0]) return [keys[0][1], keys[0][2]];
+        for (let i = 1; i < keys.length; i++) {
+          if (t <= keys[i][0]) {
+            const [t0, x0, y0] = keys[i - 1];
+            const [t1, x1, y1] = keys[i];
+            const k = ease(clamp01((t - t0) / (t1 - t0)));
+            return [lerp(x0, x1, k), lerp(y0, y1, k)];
+          }
+        }
+        const last = keys[keys.length - 1];
+        return [last[1], last[2]];
+      };
+
+      const CURSOR = [
+        [0.0, 1500, 220], [1.0, 980, 430], [3.1, 640, 400], [3.5, 640, 384],
+        [5.0, 1480, 520], [8.4, 1480, 520], [9.4, 1380, 300],
+        [14.0, 1380, 300], [14.5, 790, 405], [14.6, 790, 405], [16.6, 1140, 265], [17.2, 1300, 700],
+        [20.0, 1300, 700],
+      ];
+      const CLICKS = [3.6, 14.5]; // ripple times
+      const CHAT_X0 = 640, CHAT_Y0 = 380;
+
+      root.initializer = (tg) => {
+        const $ = (s) => tg.querySelector(s);
+        const rowsEl = $("#rows");
+        const panel = $("#panel");
+        const panelInner = $("#panelInner");
+        const toast = $("#toast");
+        const chat = $("#chat");
+        const cursor = $("#cursor");
+        const ripple = $("#ripple");
+
+        tg.addFrameTask(({ ownCurrentTime: t }) => {
+          // table scroll
+          const scroll = 228 * seg(t, 0.9, 3.2);
+          rowsEl.style.transform = `translateY(${-scroll}px)`;
+
+          // customer panel slides in at 3.7s, its content scrolls 6.2-8.2s
+          const slide = seg(t, 3.7, 4.4);
+          panel.style.transform = `translateX(${(1 - slide) * 640}px)`;
+          panel.style.visibility = slide > 0 ? "visible" : "hidden";
+          panelInner.style.transform = `translateY(${-130 * seg(t, 6.2, 8.2)}px)`;
+
+          // toast drops in at 10.0s, leaves at 13.0s
+          const tin = seg(t, 10.0, 10.5);
+          const tout = seg(t, 13.0, 13.5);
+          const toastX = 1340, toastY = lerp(-150, 96, tin) - tout * 260;
+          toast.style.transform = `translate(${toastX}px, ${toastY}px)`;
+
+          // floating chat window: appears 13.9s, dragged 14.6-16.6s, fades out 19.4s
+          const cin = seg(t, 13.8, 14.2);
+          const drag = seg(t, 14.6, 16.6);
+          const cx = CHAT_X0 + (1020 - CHAT_X0) * drag;
+          const cy = CHAT_Y0 + (210 - CHAT_Y0) * drag;
+          chat.style.transform = `translate(${cx}px, ${cy + (1 - cin) * 24}px) scale(${0.96 + 0.04 * cin})`;
+          chat.style.opacity = String(cin * (1 - seg(t, 19.2, 19.8)));
+          chat.style.visibility = cin > 0 && t < 19.8 ? "visible" : "hidden";
+
+          // cursor
+          const [mx, my] = path(t, CURSOR);
+          cursor.style.transform = `translate(${mx - 6}px, ${my - 3}px)`;
+          let r = 0;
+          for (const c of CLICKS) if (t >= c && t < c + 0.5) r = (t - c) / 0.5;
+          ripple.style.opacity = r > 0 ? String(1 - r) : "0";
+          ripple.style.transform = `translate(${mx - 22}px, ${my - 22}px) scale(${0.6 + r})`;
+        });
+      };
+    </script>
+  </body>
+</html>

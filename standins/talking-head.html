@@ -1,0 +1,112 @@
+<!doctype html>
+<!--
+  STAND-IN SOURCE FOOTAGE — "person speaking to camera, with private information on screen".
+
+  Not part of the product demo. The speaker is a NASA scientist from a public-domain NASA interview
+  (see README). The NASA patch on his shirt stands in for "an identifying mark to blur"; because nothing
+  else private is visible, this page adds a lower-third with a fictional name and email. It is rendered
+  once to src/assets/source/talking-head.mp4, which the redaction job then treats like any customer
+  upload (the original interview audio passes straight through).
+
+  Elements carrying data-pii="..." are measured by scripts/extract-tracks.mjs to produce the ground-truth
+  coordinates for this scene. "face" and "patch" are invisible ellipses (transparent, but measurable) placed from
+  the tracking data (scripts/track-face.py, scripts/track-patch.py).
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Stand-in: talking head</title>
+    <script type="module" src="/src/editframe.ts"></script>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      #scene { font-family: -apple-system, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif; }
+      #scene * { box-sizing: border-box; }
+      .abs { position: absolute; left: 0; top: 0; }
+      #clip { inset: 0; width: 1920px; height: 1080px; }
+      #face { width: 10px; height: 10px; border-radius: 50%; background: transparent; }
+
+      #patch { width: 10px; height: 10px; border-radius: 50%; background: transparent; }
+
+      #lt { left: 70px; top: 884px; width: 760px; height: 134px; border-radius: 12px; background: rgba(8, 12, 24, .82);
+            box-shadow: 0 8px 28px rgba(0,0,0,.4); border-left: 8px solid #3b82f6; }
+      #lt .name { position: absolute; left: 30px; top: 14px; font-size: 40px; font-weight: 800; color: #fff; line-height: 48px; white-space: nowrap; }
+      #lt .role { position: absolute; left: 30px; top: 62px; font-size: 22px; color: #cbd5e1; line-height: 26px; white-space: nowrap; }
+      #lt .mail { position: absolute; left: 30px; top: 92px; font-size: 25px; font-weight: 600; color: #93c5fd; line-height: 30px; white-space: nowrap; }
+    </style>
+  </head>
+  <body class="m-0 p-0 bg-slate-900">
+    <ef-timegroup id="scene" workbench mode="contain" class="relative w-[1920px] h-[1080px] overflow-hidden bg-black">
+      <ef-video id="clip" class="abs" src="/src/assets/public/nasa-solar-orbiter-interview.mp4"></ef-video>
+
+      <!-- head, tracked: an ellipse generous enough for a bald head, glasses and earrings -->
+      <div id="face" class="abs" data-pii="face" data-pii-label="FACE" data-pii-shape="ellipse"></div>
+
+      <!-- the NASA patch on the shirt: invisible, measurable, follows the torso -->
+      <div id="patch" class="abs" data-pii="patch" data-pii-label="PATCH" data-pii-shape="ellipse"></div>
+
+      <div id="lt" class="abs">
+        <div class="name" data-pii="lt-name" data-pii-label="NAME">Jordan Ellis</div>
+        <div class="role">Billing Operations, Northwind</div>
+        <div class="mail" data-pii="lt-email" data-pii-label="EMAIL">jordan.ellis@northwind-mail.com</div>
+      </div>
+    </ef-timegroup>
+
+    <script type="module">
+      const root = document.getElementById("scene");
+      const track = await (await fetch("/standins/talking-head.face-track.json")).json();
+      const patchTrack = await (await fetch("/standins/talking-head.patch-track.json")).json();
+      const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+      const seg = (t, a, b) => clamp((t - a) / (b - a), 0, 1);
+      const ease = (k) => k * k * (3 - 2 * k);
+
+      const faceAt = (t) => {
+        const f = clamp(t * track.fps, 0, track.frames.length - 1);
+        const i = Math.floor(f);
+        const a = track.frames[i];
+        const b = track.frames[Math.min(i + 1, track.frames.length - 1)];
+        const k = f - i;
+        return a.map((v, n) => v + (b[n] - v) * k); // [x, y, w, h]
+      };
+
+      const patchAt = (t) => {
+        const f = clamp(t * patchTrack.fps, 0, patchTrack.frames.length - 1);
+        const i = Math.floor(f);
+        const a = patchTrack.frames[i];
+        const b = patchTrack.frames[Math.min(i + 1, patchTrack.frames.length - 1)];
+        return a.map((v, n) => v + (b[n] - v) * (f - i));
+      };
+
+      root.initializer = (tg) => {
+        const $ = (s) => tg.querySelector(s);
+        const face = $("#face");
+        const patch = $("#patch");
+        const lt = $("#lt");
+
+        tg.addFrameTask(({ ownCurrentTime: t }) => {
+          const [fx, fy, fw] = faceAt(t);
+          const cx = fx + fw / 2;
+          const cy = fy + fw / 2;
+
+          // head ellipse
+          const w = fw * 1.22;
+          const h = fw * 1.55;
+          face.style.width = `${w}px`;
+          face.style.height = `${h}px`;
+          face.style.transform = `translate(${cx - w / 2}px, ${cy - h / 2 - fw * 0.12}px)`;
+
+          // NASA patch (tracked separately: it follows the torso, not the head)
+          const [px, py, pd] = patchAt(t);
+          patch.style.width = `${pd}px`;
+          patch.style.height = `${pd}px`;
+          patch.style.transform = `translate(${px - pd / 2}px, ${py - pd / 2}px)`;
+
+          // lower third: slides in at 1.0s, out at 22.8s
+          const tin = ease(seg(t, 1.0, 1.6));
+          const tout = ease(seg(t, 22.8, 23.4));
+          lt.style.transform = `translateX(${(1 - tin + tout) * -860}px)`;
+          lt.style.opacity = String(tin * (1 - tout));
+        });
+      };
+    </script>
+  </body>
+</html>

@@ -1,0 +1,5 @@
+# Python deps for scripts/track-face.py, scripts/track-patch.py and scripts/verify.py
+# (authoring aids and the leak test only; the renderer itself is pure Node/Chromium)
+numpy
+opencv-python
+scipy
